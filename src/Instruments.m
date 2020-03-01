@@ -28,7 +28,6 @@
 - (NSString *)leakDevice:(XRRemoteDevice *)device to:(NSString *)path {
   NSString *base = @"/var/mobile/Media";
   NSString *abs = [base stringByAppendingString:path];
-  NSLog(@"abs: %@", abs);
   NSDictionary *env = @{@"SQLITE_SQLLOG_DIR" : abs};
   PFTProcess *process = [[PFTProcess alloc] initWithDevice:device
                                                       path:@"/"
@@ -43,7 +42,8 @@
   if (err)
     @throw err;
 
-  sleep(3);
+  // todo: polling
+  sleep(1);
   [device terminateProcess:[NSNumber numberWithInt:pid]];
 
   // sqllogOpenlog
