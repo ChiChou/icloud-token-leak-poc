@@ -25,3 +25,7 @@ format:
 
 run: all
 	./bin/poc
+
+demo: all
+	./bin/poc
+	python3 extract.py
