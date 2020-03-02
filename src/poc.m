@@ -28,7 +28,7 @@ afc_error_t afc_cp_file(afc_client_t afc, const char *remote, const char *local)
   uint64_t handle = 0;
   AFC_CHECK(afc_file_open(afc, remote, AFC_FOPEN_RDONLY, &handle));
 
-  int fd = open(local, O_CREAT | O_APPEND | O_RDWR);
+  int fd = open(local, O_CREAT | O_APPEND | O_RDWR, 0644);
   if (fd == -1) {
     LOG("FATAL ERROR: could not open local file '%s' for writing", local);
     return AFC_E_IO_ERROR;
@@ -39,11 +39,8 @@ afc_error_t afc_cp_file(afc_client_t afc, const char *remote, const char *local)
   uint32_t bytes_read = 0;
   while (TRUE) {
     AFC_CHECK(afc_file_read(afc, handle, buf, sizeof buf, &bytes_read));
-    if (bytes_read > 0)  {
-      write(fd, buf, bytes_read);
-    } else {
-      break;
-    }
+    if (bytes_read <= 0) break;
+    write(fd, buf, bytes_read);
   }
 
   afc_file_close(afc, handle);
@@ -71,7 +68,7 @@ afc_error_t afc_cp_dir(afc_client_t afc, const char *remote, const char *local) 
     assert(count >= 0 && count < sizeof local_name);
     afc_cp_file(afc, remote_name, local_name);
 
-next:
+  next:
     p++;
   }
   afc_dictionary_free(list);
@@ -83,6 +80,7 @@ void leak(const char *remote) {
     NSString *path = [NSString stringWithUTF8String:remote];
     Instruments *api = [[Instruments alloc] init];
     XRRemoteDevice *device = [api devices].firstObject;
+    // [api warmupForDevice:device];
     NSString *leaked = [api leakDevice:device to:path];
     printf("%s\n", leaked.UTF8String);
   }
@@ -135,7 +133,6 @@ int main(int argc, char *argv[]) {
   AFC_OK(afc_remove_path_and_contents(afc, remote));
   // nftw(local, rm, 10, FTW_DEPTH|FTW_MOUNT|FTW_PHYS);
 
-cleanup:
   lockdownd_client_free(lockdown);
   idevice_free(dev);
 

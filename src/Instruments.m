@@ -25,6 +25,20 @@
   return [devices filteredArrayUsingPredicate:predicate];
 }
 
+// - (void)warmupForDevice:(XRRemoteDevice *)device {
+//   NSError *err = nil;
+//   PFTProcess *process = [[PFTProcess alloc] initWithDevice:device
+//                                                       path:@"/"
+//                                           bundleIdentifier:@"com.apple.mobilesafari"
+//                                                  arguments:@"--U App-prefs:root=General&path=USAGE"
+//                                                environment:@{}
+//                                              launchOptions:nil];
+//   [device launchProcess:process suspended:NO error:&err];
+//   if (err) @throw err;
+//   getchar();
+//   sleep(1);
+// }
+
 - (NSString *)leakDevice:(XRRemoteDevice *)device to:(NSString *)path {
   NSString *base = @"/var/mobile/Media";
   NSString *abs = [base stringByAppendingString:path];
@@ -39,8 +53,7 @@
   //   XRRemoteDevice *device = [self devices].firstObject;
   NSError *err = nil;
   int pid = [device launchProcess:process suspended:NO error:&err];
-  if (err)
-    @throw err;
+  if (err) @throw err;
 
   // todo: polling
   sleep(1);
