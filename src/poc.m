@@ -76,7 +76,7 @@ afc_error_t afc_cp_dir(afc_client_t afc, const char *remote, const char *local) 
 }
 
 void leak(const char *remote) {
-  // this part can also be port to open source solutions
+  // this part can be port to open source solutions
   // https://github.com/frida/frida-core/blob/8726e/src/fruity/dtx.vala
   @autoreleasepool {
     NSString *path = [NSString stringWithUTF8String:remote];
@@ -127,7 +127,7 @@ int main(int argc, char *argv[]) {
   AFC_OK(afc_make_directory(afc, remote));
   printf("%s/", local);
   leak(remote);
-  // getchar();
+
   // cp -r
   afc_cp_dir(afc, remote, local);
 
