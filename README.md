@@ -24,11 +24,11 @@ Key points:
 
 Bonus:
 
-* iCloud REST API has (improper?) a cache policy, making NSURLSession to leak sensitve tokens to the database
+* iCloud REST API has a (an improper?) cache policy, making NSURLSession to leave sensitve tokens in the database
 * `com.apple.Preferences` app can leak the iCloud Authorization header for us
 * Luckily, this database can not be read before first unlock
 
-I don't want to call it a bug since the only way to trully exploit it is to weaponize this with some other sandbox escape exploit. For example: medialibraryd arbitrary SQLite database access
+I don't want to call it a bug since the only way to truly exploit it is to weaponize this with some other sandbox escape exploit. For example: medialibraryd arbitrary SQLite database access
 
 * https://support.apple.com/en-il/HT210118
 * https://www.slideshare.net/cisoplatform7/fasten-your-seatbelts-we-are-escaping-ios-11-sandbox
@@ -69,7 +69,7 @@ Here is an example output of what we can obtain from MobileSafari:
 8 /private/var/mobile/Containers/Data/Application/9210B36C-89E2-4728-9831-40CAA961C15E/Library/Caches/com.apple.mobilesafari/Cache.db
 ```
 
-I have to emphasize again, the acquisition only takes seconds and it includes privacy that does not included in iTunes backup.
+I have to emphasize again, the acquisition only takes seconds and it includes privacy that is usually excluded in iTunes backup.
 
 Now it's important to choose where to write.
 
@@ -105,10 +105,11 @@ Opening Settings app (com.apple.Preferences) immediatly emits requests to iCloud
 
 I see a lot 'Authorization' and tokens in the cache. And even these:
 
-> 'X-Apple-I-MD': '***',
+> 'X-Apple-I-MD': '***'
+
 > 'X-Apple-I-MD-M': '***'
 
-For those accounts that are not protected by 2FA, this token is the only thing you need to replay and gain (full, I thnk?) access to victim's iCloud. When 2FA has been enabled, the token looks longer but replay won't work anymore. We need calculate a new `X-Apple-I-MD` for each new request. You can still grab X-Apple-I-MD-M in previous requests. I don't think I can challenge that algorithm so I am stopping here.
+For those accounts that are not protected by 2FA, this token is the only thing you need to replay and gain (full, I think?) access to victim's iCloud. When 2FA has been enabled, the token looks longer but replay won't work anymore. We need to calculate a new `X-Apple-I-MD` for each new request. You can still grab X-Apple-I-MD-M in previous requests. I don't think I can challenge that algorithm so I am stopping here.
 
 ## PoC
 
@@ -119,7 +120,7 @@ prerequisite
 * libimobiledevices
 * Xcode and Instruments.app
 
-(The python & Instruments parts can also be completely implemented on libimobiledevices, making it possible to run on raspberry pi or something)
+(The Instruments part can be completely implemented on libimobiledevices, making it possible to run on raspberry pi or something)
 
 1. Connect the phone, unlock and trust the computer.
 2. `make demo` to compile and run
