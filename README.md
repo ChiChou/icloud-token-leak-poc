@@ -1,5 +1,19 @@
 # iCloud token leak & database acquisition on iOS
 
+**UPDATE on Aug 08, 2020**
+
+This proof of concept has been reported to Apple around March upon their request, though I don't quite agree it's a vulnerability myself. It requires UNLOCKED and TRUSTED USB connection, then extracts an iCloud access token almost immediately. If you have experience of iCloud forensics, you'll know that this token roughly means account takeover when the account has no 2FA.
+
+The limitation is so evident. It needs clear passcode to unlock the device and trust USB first. So it only makes sense to authorities to perform quick forensics. For example, an officer asks you to unlock the phone and connect it to some box. It could happen at a security check or even in the streets, and it only takes seconds to get access to your data. As far as I know, there are already plenty of jailbreak based solutions that give everything.
+
+It seemed like Apple hardened the server-side very quickly, and you see some cloud forensics providers complaining about it: https://twitter.com/ElcomSoft/status/1245244361899749377. It's been months (individuals aren't supposed to have 90-day disclosure policy?), and I agree that the attack scenario is way too limited. I don't see this meet the bar of any one listed in their payout entries. So I make it public here.
+
+![](img.png)
+
+It only gives HTTP 401 error now because of the hardened iCloud server.
+
+---------
+
 Key points:
 
 * Abusing DDI to inject arbitrary envirnments string to apps (requires trusted USB & unlocked)
@@ -16,8 +30,8 @@ Bonus:
 
 I don't want to call it a bug since the only way to trully exploit it is to weaponize this with some other sandbox escape exploit. For example: medialibraryd arbitrary SQLite database access
 
-> https://support.apple.com/en-il/HT210118
-> https://www.slideshare.net/cisoplatform7/fasten-your-seatbelts-we-are-escaping-ios-11-sandbox
+* https://support.apple.com/en-il/HT210118
+* https://www.slideshare.net/cisoplatform7/fasten-your-seatbelts-we-are-escaping-ios-11-sandbox
 
 But somehow it can be abused to violate privacy. Imagine this, if an officer stops you and ask you to unlock and hand out your phone to perform a "quick" check with a USB connected blackbox, would you do so?
 
