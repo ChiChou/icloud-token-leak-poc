@@ -24,7 +24,7 @@ Key points:
 
 Bonus:
 
-* iCloud REST API has a (an improper?) cache policy, making NSURLSession to leave sensitve tokens in the database
+* iCloud REST API has a (an improper?) cache policy, making NSURLSession to leave sensitive tokens in the database
 * `com.apple.Preferences` app can leak the iCloud Authorization header for us
 * Luckily, this database can not be read before first unlock
 
